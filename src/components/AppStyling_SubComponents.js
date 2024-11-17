@@ -1,0 +1,1 @@
+export const buttonBorderRadius = "rounded-[7.5px]";
