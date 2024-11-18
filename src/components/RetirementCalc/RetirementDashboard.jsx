@@ -69,11 +69,11 @@ export default function RetirementDashboard() {
   const dashboardStyling = [
     "bg-[#1B1E23]",
     "w-[100%]",
-    "h-[calc(100%-77px)] max-xl:h-[1600px]",
+    "h-[calc(100%-77px)] max-xl:h-[1450px]",
     "pt-[5vh]",
     "pl-[5vw]",
     "flex",
-    "flex max-xl:flex-col max-xl:gap-8"
+    "flex max-xl:flex-col max-xl:gap-4"
   ].join(" ");
 
   // Create a 2-second lag when to update the graph when form values are updated
@@ -107,6 +107,7 @@ export default function RetirementDashboard() {
     p: "pl-[25px] py-[27.5px]",
     gap: "gap-x-[20px] gap-y-[5px]",
     flex: "max-xl:grid max-xl:grid-cols-2 ",
+    h: "min-h-[85%] max-h-[85%]",
   };
 
   return (

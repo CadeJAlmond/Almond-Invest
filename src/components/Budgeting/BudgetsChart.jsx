@@ -41,7 +41,7 @@ export default function BudgetsChart({ children, budgets, income }) {
   // Variables for the d3 rendering
   const sizeRef = useRef();
   const MARGIN = { left: 175, bottom: 180, top: 95, right: 120 };
-  const PHONE_MARGIN = {left: 125, bottom: 125, top: 70, right: 70 };
+  const PHONE_MARGIN = {left: 125, bottom: 125, top: 100, right: 70 };
 
   const YAxisBoxWidth = 120;
 
@@ -272,6 +272,13 @@ export default function BudgetsChart({ children, budgets, income }) {
 
       const yAxis = d3.axisLeft(yScale);
 
+      console.log(isPhoneSize)
+
+      if (isPhoneSize) {
+        yAxis.ticks(3);
+        xAxis.ticks(3);
+      }
+
       // Append the axis HTML elements
       svg.append("g")
         .classed("yAxis", true)
@@ -352,6 +359,7 @@ export default function BudgetsChart({ children, budgets, income }) {
     "bg-[#101215]/75",
     "w-[calc(90vw-360px)] max-xl:w-[87.25vw]",
     "max-h-[80vh] h-[80vh] min-h-[80vh]",
+    "max-md:max-h-[70vh] max-md:h-[70vh] max-md:min-h-[70vh]",
   ].join(" ");
 
   const dropdownMenuStyling = {
@@ -361,7 +369,7 @@ export default function BudgetsChart({ children, budgets, income }) {
 
   const sliderStyling = {
     end: "mt-[5px]",
-    w: "w-[calc(5% + 75px)]",
+    w: "w-[calc(5% + 75px)] max-md:w-[25vw]",
   };
 
   const chartHeaderStyling = [

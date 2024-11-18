@@ -46,24 +46,24 @@ export default function RetirementPredictionChart({
 
   const lineChartCutOff = 300;
 
-  const MARGIN = { left: 75, bottom: 85, top: 130, right: -20 };
-  const PHONE_MARGIN = { left: 45, bottom: 45, top: 90, right: 0 };
+  const MARGIN = { left: 75, bottom: 85, top: 150, right: -20 };
+  const PHONE_MARGIN = { left: 55, bottom: 45, top: 115, right: 0 };
   const INNER_MARGIN = { left: 45, bottom: 30 };
 
   const getMarginOffScreenSize = () => {
     const svgWidth = sizeRef.current?.clientWidth || 0;
     const svgHeight = sizeRef.current?.clientHeight || 0;
 
-    const phoneDisplay = svgWidth > 800;
-    const CURRENT_MARGIN = phoneDisplay ? MARGIN : PHONE_MARGIN;
+    const phoneDisplay = svgWidth < 800;
+    const CURRENT_MARGIN = phoneDisplay ? PHONE_MARGIN : MARGIN ;
 
     return { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight };
   };
-
+  
   const getGraphDimensions = () => {
     const { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight } = getMarginOffScreenSize();
 
-    const currentLineChartCutOff = phoneDisplay ? lineChartCutOff : 30;
+    const currentLineChartCutOff = !phoneDisplay ? lineChartCutOff : 30;
     const height = svgHeight - CURRENT_MARGIN.top - CURRENT_MARGIN.bottom;
     const width = svgWidth - CURRENT_MARGIN.left - CURRENT_MARGIN.right - currentLineChartCutOff;
 
@@ -263,7 +263,7 @@ export default function RetirementPredictionChart({
    * @returns xAxis, yAxis, xScale, yScale to use to map numbers onto the
    *   chart on the users screen.
    */
-  const setupChartAxis = (graphHeight) => {
+  const setupChartAxis = (graphHeight, phoneDisplay) => {
     const yMax = rothIra ? retirementEarnings.at(-1) : retirementEarnings.at(-2);
 
     const yScale = d3.scaleLinear()
@@ -280,6 +280,11 @@ export default function RetirementPredictionChart({
 
     const xAxis = d3.axisBottom(xScale);
     xAxis.tickFormat((d, i) => convertNumberToDate(d));
+
+     // Limit the number of ticks on x-axis for phone display
+     if (phoneDisplay) {
+      xAxis.ticks(6);
+    }
 
     return [yAxis, xAxis, yScale, xScale];
   };
@@ -562,8 +567,8 @@ export default function RetirementPredictionChart({
 
   useEffect(() => {
     const { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight } = getMarginOffScreenSize();
-    const widthPadding  = MARGIN.left + MARGIN.right + INNER_MARGIN.left;
-    const heightPadding = MARGIN.top + MARGIN.bottom;
+    const widthPadding  = CURRENT_MARGIN.left + CURRENT_MARGIN.right + INNER_MARGIN.left;
+    const heightPadding = CURRENT_MARGIN.top + CURRENT_MARGIN.bottom;
 
     d3.select("#Linechart-div")
       .select("svg")
@@ -571,7 +576,7 @@ export default function RetirementPredictionChart({
       .attr("width", (width ? width : 0) + widthPadding )
       .attr("height", (height ? height : 0) + heightPadding)
       .select("g")
-      .attr("transform", "translate(" + MARGIN.left + "," + MARGIN.top + ")");
+      .attr("transform", "translate(" + CURRENT_MARGIN.left + "," + CURRENT_MARGIN.top + ")");
 
     if (retirementEarnings.length) {
       let svg = d3.select("#Linechart-div").select("svg").select("g");
@@ -580,12 +585,12 @@ export default function RetirementPredictionChart({
 
       const graphHeight = height - INNER_MARGIN.bottom;
 
-      const [yAxis, xAxis, yScale, xScale] = setupChartAxis(graphHeight);
+      const [yAxis, xAxis, yScale, xScale] = setupChartAxis(graphHeight, phoneDisplay);
 
       // Append the axis elements first
       svg.append("g")
-        .classed("yAxis", true)
-        .attr(`transform", translate(${INNER_MARGIN.left}, 0)`);
+      .classed("yAxis", true)
+      .attr("transform", `translate(${INNER_MARGIN.left}, 0)`);
 
       svg.append("g")
         .classed("xAxis", true)
@@ -663,6 +668,7 @@ export default function RetirementPredictionChart({
       "flex-col",
       "gap-[3%]",
       "justify-start",
+      "max-md:gap-[15px] max-md:grid-cols-2 max-md:grid"
     ].join(" ");
 
     const statsCardStyling = [
@@ -678,6 +684,7 @@ export default function RetirementPredictionChart({
       "bg-[#0a0b0d]/50",
       "pl-[15px]",
       "rounded-[7.5px]",
+      "max-md:h-[90px] max-md:w-[100%]"
     ].join(" ");
 
     const spanStyling = [
@@ -692,7 +699,7 @@ export default function RetirementPredictionChart({
         {retirementStats.map((statsInfo) => {
           // Inject the styling into the statsInfo
           statsInfo["statsCardStyling"] = statsCardStyling
-          statsInfo["spanStyling"] = spanStyling
+          statsInfo["spanStyling"]      = spanStyling
 
           return (
             <RetirementStatisticCard statsInfo={statsInfo}/>
@@ -705,9 +712,20 @@ export default function RetirementPredictionChart({
   const dashboardSectionStyling = [
     "bg-[#101215]/75",
     "w-[calc(90vw-360px)] max-xl:w-[87.5vw]",
-    "max-h-[80vh] min-h-[80vh] max-xl:max-h-[500px] max-2xl:min-h-[500px]",
+    "max-h-[80vh] min-h-[80vh] max-xl:max-h-[400px] max-2xl:min-h-[400px]",
     "flex max-xl:flex-col",
+    "max-md:rounded-[15px]"
   ].join(" ");
+
+  const dashboardTitleStyling = [
+    "absolute", 
+    "text-3xl", 
+    "mt-[2.25%]", 
+    "ml-[1.5%]",
+    "text-[#f4f4f5]",
+    "max-md:ml-[12.5%]",
+    "max-md:mt-[5%]",
+  ].join(" ")
 
   return (
     <>
@@ -716,7 +734,7 @@ export default function RetirementPredictionChart({
         <div id="Linechart-div" className={children ? "blur-[0.675px]" : ""}>
           {/* Create heading text for the projection chart */}
           <strong>
-            <h3 className={ "absolute text-3xl mt-[2.25%] ml-[1.5%] text-[#f4f4f5]"}>
+            <h3 className={dashboardTitleStyling}>
               Retirement Calculator :
             </h3>
           </strong>

@@ -59,7 +59,7 @@ export default function ChartsSideBar({ children  }) {
 
   const sideBarStyling = [
     buttonBorderRadius,
-    "max-h-[80vh] min-h-[80vh] max-xl:h-[470px]",
+    "max-h-[80vh] min-h-[80vh] max-xl:max-h-[68.5vh] max-xl:min-h-[68.5vh]",
     "w-[364px] max-xl:w-[87.5vw]",
     "bg-[#0a0b0d]/65",
     "px-[10px]",
