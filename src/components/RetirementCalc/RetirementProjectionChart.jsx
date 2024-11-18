@@ -250,9 +250,9 @@ export default function RetirementPredictionChart({
 
     if (lengthOfNumber > 12) return `${num / 1_000_000_000_000} TRIL`;
 
-    if (lengthOfNumber > 10) return `${num / 1_000_000_000}BIL`;
+    if (lengthOfNumber > 9) return `${num / 1_000_000_000} BIL`;
 
-    if (lengthOfNumber > 7) return `${num / 1_000_000} MIL`;
+    if (lengthOfNumber > 6) return `${num / 1_000_000} MIL`;
 
     return `${num / 1_000} K`;
   };
