@@ -10,7 +10,7 @@
 // use a new prop named isLoading which is the JSX for the loading screen
 
 /* --=== Imports ===-- */
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { orangeBg } from "../AppStyling_Colors";
 import * as d3 from "d3";
 
@@ -32,53 +32,55 @@ export default function RetirementPredictionChart({
   rothIra,
 }) {
   // -==== RETIREMENT PROJECTION GLOBAL VARIABLES ====-
-
   // State for retirement projection simulation math
   const [retirementEarnings, setRetirementFunds] = useState([]);
   const [totalTaxesPaid, setTaxesPaid] = useState([]);
-
-  // Variables used for the d3 rendering
+  
+  const [graphDimensions, setGraphDimensions] = useState({ height: 0, width: 0 });
   const sizeRef = useRef();
 
-  const MARGIN = { left: 75, bottom: 85, top: 130, right: -20 };
-  const PHONE_MARGIN = {left: 45, bottom: 45, top: 90, right: 0 };
-
-  const lineChartCutOff = 300;
-  const INNER_MARGIN = { left: 45, bottom: 30 };
-
-  const getMarginOffScreenSize = () => {
-    const svgHeight = sizeRef?.current?.clientHeight ? sizeRef?.current?.clientHeight : 0
-    const svgWidth  = sizeRef?.current?.clientWidth ? sizeRef?.current?.clientWidth  : 0
-
-    const phoneDisplay = (svgWidth != 0 && svgWidth >  800 )
-
-    const CURRENT_MARGIN = (phoneDisplay) ? MARGIN : PHONE_MARGIN
-    return [CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight]
-  }
-
-  const getGraphDimensions = () =>{
-    const [MARGIN, phoneDisplay, svgWidth, svgHeight] = getMarginOffScreenSize();
-
-    const currentLineChartCutOff = (phoneDisplay) ? lineChartCutOff : 30
-
-    const height = svgHeight - MARGIN.top - MARGIN.bottom;
-    const width  = svgWidth  - MARGIN.left - MARGIN.right - currentLineChartCutOff;
-    return {height, width}
-  }
-
-  const [graphDimensions, setGraphDimensions] = useState(getGraphDimensions())
-  const {height, width} = graphDimensions
+  // Destructure dimensions
+  const { height, width } = graphDimensions;
 
   const ANIMATION_DURATION = 450;
 
-  // Update the size of the graph when the screen size changes
-  const updateGraphDimensions = () => setGraphDimensions(getGraphDimensions())
+  const lineChartCutOff = 300;
 
-  useEffect(()=>{
-    window.addEventListener("resize", () => updateGraphDimensions());
-    // cleanup event listener
-    return () => window.removeEventListener("resize", updateGraphDimensions());
-  },[])
+  const MARGIN = { left: 75, bottom: 85, top: 130, right: -20 };
+  const PHONE_MARGIN = { left: 45, bottom: 45, top: 90, right: 0 };
+  const INNER_MARGIN = { left: 45, bottom: 30 };
+
+  const getMarginOffScreenSize = () => {
+    const svgWidth = sizeRef.current?.clientWidth || 0;
+    const svgHeight = sizeRef.current?.clientHeight || 0;
+
+    const phoneDisplay = svgWidth > 800;
+    const CURRENT_MARGIN = phoneDisplay ? MARGIN : PHONE_MARGIN;
+
+    return { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight };
+  };
+
+  const getGraphDimensions = () => {
+    const { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight } = getMarginOffScreenSize();
+
+    const currentLineChartCutOff = phoneDisplay ? lineChartCutOff : 30;
+    const height = svgHeight - CURRENT_MARGIN.top - CURRENT_MARGIN.bottom;
+    const width = svgWidth - CURRENT_MARGIN.left - CURRENT_MARGIN.right - currentLineChartCutOff;
+
+    return { height, width };
+  };
+
+  const updateGraphDimensions = () => {
+    setGraphDimensions(getGraphDimensions());
+  };
+
+  // Using useLayoutEffect to ensure DOM updates are calculated before the paint
+  useLayoutEffect(() => {
+    updateGraphDimensions();
+
+    window.addEventListener("resize", updateGraphDimensions);
+    return () => window.removeEventListener("resize", updateGraphDimensions);
+  }, []);
 
   // If for some reason data for the simulation wasn't included
   if (
@@ -524,8 +526,7 @@ export default function RetirementPredictionChart({
       const overLayData = computeStatsOfCompoundedMoney(moneyHovered, age);
 
       // Draw text with statistics about the current position
-      svg
-        .select("#overlay")
+      svg.select("#overlay")
         .selectAll("text.hover-text")
         .data(overLayData)
         .join(
@@ -560,64 +561,69 @@ export default function RetirementPredictionChart({
   // -==== CREATING THE FULL CHART ====-
 
   useEffect(() => {
-    const [MARGIN, phoneDisplay, svgWidth, svgHeight] = getMarginOffScreenSize();
-  
-    const widthPadding = MARGIN.left + MARGIN.right + INNER_MARGIN.left;
+    const { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight } = getMarginOffScreenSize();
+    const widthPadding  = MARGIN.left + MARGIN.right + INNER_MARGIN.left;
     const heightPadding = MARGIN.top + MARGIN.bottom;
-  
+
     d3.select("#Linechart-div")
       .select("svg")
-      .attr("width", (width || 0) + widthPadding)
-      .attr("height", (height || 0) + heightPadding)
+      .attr("font-family", "League Spartan")
+      .attr("width", (width ? width : 0) + widthPadding )
+      .attr("height", (height ? height : 0) + heightPadding)
       .select("g")
-      .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
-  
+      .attr("transform", "translate(" + MARGIN.left + "," + MARGIN.top + ")");
+
     if (retirementEarnings.length) {
       let svg = d3.select("#Linechart-div").select("svg").select("g");
-      svg.select("#overlay").selectAll("*").remove(); // Clear overlay on update
-      svg.selectAll(".xAxis, .yAxis").remove(); // Clear axes before re-adding
-  
+      svg.append("g").attr("id", "overlay").append("line");
+      svg.select("#overlay").append("rect");
+
       const graphHeight = height - INNER_MARGIN.bottom;
+
       const [yAxis, xAxis, yScale, xScale] = setupChartAxis(graphHeight);
-  
-      // Append and re-add the xAxis
-      svg.append("g")
-        .classed("xAxis", true)
-        .attr("transform", `translate(0, ${graphHeight})`)
-        .call(xAxis)
-        .attr("font-size", "16")
-        .style("color", "rgba(244, 244, 245, 0.8)");
-  
-      // Append and re-add the yAxis
+
+      // Append the axis elements first
       svg.append("g")
         .classed("yAxis", true)
-        .attr("transform", `translate(${INNER_MARGIN.left}, 0)`)
+        .attr(`transform", translate(${INNER_MARGIN.left}, 0)`);
+
+      svg.append("g")
+        .classed("xAxis", true)
+        .attr("transform", `translate(0, ${graphHeight})`);
+
+      // Call the axis"s
+      svg.select(".yAxis")
         .call(yAxis)
         .attr("font-size", "16")
         .style("color", "rgba(244, 244, 245, 0.8)");
-  
-      // Add labels for xAxis and yAxis
+      
+      svg.select(".xAxis")
+        .call(xAxis)
+        .attr("font-size", "16")
+        .style("color", "rgba(244, 244, 245, 0.8)");
+
+      // Add labels to the axis's
       svg.select("#xAxisLabel")
         .text("Year")
         .attr("x", width / 2)
         .attr("y", height + 40)
         .style("font-size", "22px")
         .style("fill", "rgba(244, 244, 245, 0.9)");
-  
+
       svg.select("#yAxisLabel")
         .text("Money made")
         .attr("x", -MARGIN.left / 4)
         .attr("y", -MARGIN.top / 5)
         .style("font-size", "22px")
         .style("fill", "rgba(244, 244, 245, 0.9)");
-  
-      // Draw lines and other elements with updated xScale and yScale
+
       d3.select("#Linechart-div").selectAll(".linePath").remove();
       d3.select("#Linechart-div").selectAll("line.vertical-grid").remove();
-  
+
+      // Draw all of the data of the graph
       svg = drawGradientAreaOnGraph(svg, graphHeight, xScale, yScale);
       svg = drawLinesOnGraph(svg, xScale, yScale);
-  
+
       // Attach on On-Click listener
       d3.select("#Linechart-div")
         .select("svg")
