@@ -25,34 +25,45 @@ import RetirementPredictionChart from "./RetirementProjectionChart";
 // --== Form ==-
 import Form from "../../roar/Form";
 import DualInput from "../../roar/DualInput";
+import Checkbox from "../../roar/CheckBox";
 
 /* --=== Default Form Values ===-- */
 // These values represent the parameters / general data for the inputs
 // shown within the form.
 const defaultRetirementFormValues = {
-  investing: {
-    text: "(%) Percent of income to invest",
-    value: 20, max: 100, min: 1,
+  isRothIRA: {
+    text: "IS ROTH IRA?",
+    value: false,
+    InputComponent: Checkbox,
+  },
+  initialBalance: {
+    text: "($) INITIAL BALANCE",
+    value: 0, max: 1_000_000, min: 0,
     InputComponent: DualInput,
   },
-  annualIncome: {
-    text: "($) Annual Income",
-    value: 65_000, max: 10_000_000, min: 5_000,
+  expectedStockGrowth: {
+    text: "(%) EXPECTED ANNUAL GROWTH",
+    value: 13, max: 80, min: 1,
     InputComponent: DualInput,
   },
   age: {
-    text: "Your current age",
+    text: "CURRENT AGE",
     value: 22, max: 95, min: 1,
     InputComponent: DualInput,
   },
   retirementAge: {
-    text: "Age of retirement",
+    text: "AGE OF RETIREMENT",
     value: 65, max: 95, min: 20,
     InputComponent: DualInput,
   },
-  expectedStockGrowth: {
-    text: "(%) Expected stock returns",
-    value: 13, max: 80, min: 1,
+  annualIncome: {
+    text: "($) ANNUAL INCOME",
+    value: 65_000, max: 1_000_000, min: 5_000,
+    InputComponent: DualInput,
+  },
+  investing: {
+    text: "(%) PERCENT OF INCOME TO INVEST",
+    value: 20, max: 100, min: 1,
     InputComponent: DualInput,
   },
 };
@@ -67,11 +78,11 @@ export default function RetirementDashboard() {
 
   // Dashboard styling class list
   const dashboardStyling = [
-    "bg-[#1B1E23]",
+    "bg-[#0F1115]",
     "w-[100%]",
-    "h-[calc(100%-77px)] max-xl:h-[1450px]",
-    "pt-[5vh]",
-    "pl-[5vw]",
+    "h-[calc(100%-60px)] max-xl:h-[1450px]",
+    "pt-[2vh]",
+    "pl-[1.5vw]",
     "flex",
     "flex max-xl:flex-col max-xl:gap-4"
   ].join(" ");
@@ -116,6 +127,7 @@ export default function RetirementDashboard() {
       <ChartsSideBar setSideBarScreen={navigateToScreen}>
         {/* Generate the form for the retirement projection */}
         <Form
+          title="PARAMETERS"
           formInputsData={formValues}
           formValueUpdate={(updatedFormData) => {
             updateFormValues(updatedFormData);
@@ -127,10 +139,11 @@ export default function RetirementDashboard() {
       {/* Render a RetirementPredictionChart which displays the retirement projection */}
       <RetirementPredictionChart
         stockGainsPerYear={+graphValues.expectedStockGrowth.value}
+        initialBalance={+graphValues.initialBalance.value}
         annualIncome={+graphValues.annualIncome.value}
         percentageOfIncomeToInvest={+graphValues.investing.value}
         age={+graphValues.age.value}
-        isRoth={true}
+        isRothIRA={graphValues.isRothIRA.value}
       >
         {loadingInputChanges && (
           <AnimatedLoading

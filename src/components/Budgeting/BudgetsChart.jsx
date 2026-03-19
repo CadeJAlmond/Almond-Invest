@@ -41,27 +41,27 @@ export default function BudgetsChart({ children, budgets, income }) {
   // Variables for the d3 rendering
   const sizeRef = useRef();
   const MARGIN = { left: 175, bottom: 180, top: 95, right: 120 };
-  const PHONE_MARGIN = {left: 125, bottom: 125, top: 100, right: 70 };
+  const PHONE_MARGIN = { left: 125, bottom: 125, top: 100, right: 70 };
 
   const YAxisBoxWidth = 120;
 
   const ANIMATION_DURATION = 450;
 
   // Preparing chart data
-  const chartData = budgets.map( (b) => {
-    return {...b, value :  convertYearlyIncomeToTimeframeAmount(b.value) }
+  const chartData = budgets.map((b) => {
+    return { ...b, value: convertYearlyIncomeToTimeframeAmount(b.value) }
   })
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const isPhoneSize = 600 > dimensions.width 
+  const isPhoneSize = 600 > dimensions.width
 
   useLayoutEffect(() => {
     const GRAPH_MARGIN = isPhoneSize ? PHONE_MARGIN : MARGIN
-    const PHONE_WIDTH_PADDING = ( isPhoneSize ? 1.075 : 1)
+    const PHONE_WIDTH_PADDING = (isPhoneSize ? 1.075 : 1)
 
     if (sizeRef.current) {
       setDimensions({
-        width: +(sizeRef.current.clientWidth * PHONE_WIDTH_PADDING ) - GRAPH_MARGIN.left - GRAPH_MARGIN.right,
+        width: +(sizeRef.current.clientWidth * PHONE_WIDTH_PADDING) - GRAPH_MARGIN.left - GRAPH_MARGIN.right,
         height: sizeRef.current.clientHeight - GRAPH_MARGIN.top - GRAPH_MARGIN.bottom,
       });
     }
@@ -262,7 +262,7 @@ export default function BudgetsChart({ children, budgets, income }) {
         .range([0, width])
         .nice();
 
-      const xAxis = d3.axisTop(xScale).tickFormat((d) =>`$${addComasToNumber(d)}`);
+      const xAxis = d3.axisTop(xScale).tickFormat((d) => `$${addComasToNumber(d)}`);
 
       const yScale = d3.scaleBand()
         .range([height, 0])
@@ -271,8 +271,6 @@ export default function BudgetsChart({ children, budgets, income }) {
         .paddingOuter(0.2);
 
       const yAxis = d3.axisLeft(yScale);
-
-      console.log(isPhoneSize)
 
       if (isPhoneSize) {
         yAxis.ticks(3);
@@ -337,9 +335,9 @@ export default function BudgetsChart({ children, budgets, income }) {
       // Draw the data
       svg = drawLinesOnGraph(svg, xScale);
       svg = drawBarsOnGraph(
-        svg, 
-        xScale, 
-        yScale, 
+        svg,
+        xScale,
+        yScale,
         d3.max(Object.values(budgets), (d) => d.value),
         d3.min(Object.values(budgets), (d) => d.value)
       );
@@ -373,7 +371,7 @@ export default function BudgetsChart({ children, budgets, income }) {
   };
 
   const chartHeaderStyling = [
-    "h-[80px]",  
+    "h-[80px]",
     "ml-[48px]",
     "flex",
     "w-[100%]",
@@ -395,43 +393,43 @@ export default function BudgetsChart({ children, budgets, income }) {
             Budgets Calculator :
           </h3>
           <div className="flex w-[200px]">
-          <DropdownMenu
-            placeholderText="Timeframe"
-            selectedItem={selectedTimeframe}
-            styles={dropdownMenuStyling}
-          >
-            {timeframes.map((dropdownItem) => {
-              return (
-                <li
-                  className="content-center hover:bg-[#F1655C]/85 px-[7.5px] py-[5px]"
-                  onClick={() => {
-                    setTimeframeMultiple(1);
-                    setTimeframe(dropdownItem);
-                  }}
-                >
-                  {dropdownItem}
-                </li>
-              );
-            })}
-          </DropdownMenu>
-          <p className="text-4xl text-[#f4f4f5] flex mx-[15px] gap-[10px]">
-            {timeframeMultiple}
-            <SliderInput
-              updatedInput={(e) => {
-                setTimeframeMultiple(+e.target.value);
-              }}
-              value={timeframeMultiple}
-              max={
-                selectedTimeframe === "Yearly"
-                  ? 15
-                  : timeframeOfBudgets[selectedTimeframe]
-              }
-              min={1}
-              name={"slider"}
+            <DropdownMenu
+              placeholderText="Timeframe"
               selectedItem={selectedTimeframe}
-              styles={sliderStyling}
-            />
-          </p>
+              styles={dropdownMenuStyling}
+            >
+              {timeframes.map((dropdownItem) => {
+                return (
+                  <li
+                    className="content-center hover:bg-[#F1655C]/85 px-[7.5px] py-[5px]"
+                    onClick={() => {
+                      setTimeframeMultiple(1);
+                      setTimeframe(dropdownItem);
+                    }}
+                  >
+                    {dropdownItem}
+                  </li>
+                );
+              })}
+            </DropdownMenu>
+            <p className="text-4xl text-[#f4f4f5] flex mx-[15px] gap-[10px]">
+              {timeframeMultiple}
+              <SliderInput
+                updatedInput={(e) => {
+                  setTimeframeMultiple(+e.target.value);
+                }}
+                value={timeframeMultiple}
+                max={
+                  selectedTimeframe === "Yearly"
+                    ? 15
+                    : timeframeOfBudgets[selectedTimeframe]
+                }
+                min={1}
+                name={"slider"}
+                selectedItem={selectedTimeframe}
+                styles={sliderStyling}
+              />
+            </p>
           </div>
         </strong>
 

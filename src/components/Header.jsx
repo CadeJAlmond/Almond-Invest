@@ -10,9 +10,9 @@ import { Link } from "react-router-dom";
 export default function Header() {
   // Styles for the header
   const headerStyling = [
-    "bg-[#111518]",
-    "border-b-[5px]",
-    "border-[#cb372d]/70",
+    "bg-[#0F1115]",
+    "border-b-[2px]",
+    "border-[#2d323b]/70",
   ].join(" ");
 
   const centerAndFlex = ["flex", "content-end", "justify-between", "flex-row"].join(" ");
@@ -21,48 +21,20 @@ export default function Header() {
   const navStyling = [
     centerAndFlex,
     "flex-wrap",
-    "h-[58px]",
+    "h-[48px]",
     "w-[100%]",
     "px-[32px]",
-    "mb-[14px]",
+    "mb-[10px]",
   ].join(" ");
 
-  const websiteNameStyling = ["text-3xl", "text-[#ffffffde]", "max-md:translate-y-[30px]" ].join(" ");
-
-  // Styles for links
-  const navigationLinksStyling = [
-    centerAndFlex,
-    "w-[260px]",
-    "mt-[8px]",  
-    "h-[26px"
-  ].join(" ");
-
-  // Styles for links TEXT
-  const navLinkTextStyling = ["text-lg", "text-[#ffffffde]"].join(" ");
-
-  // Navigation links to show header
-  const links = [
-  ];
-
-  function NavLinksMenu() {
-    return links.map((link) => {
-      return (
-        <Link className={navLinkTextStyling}  to={link.ahref}> 
-          {link.name} 
-        </Link>
-      );
-    })
-  };
+  const websiteNameStyling = ["text-2xl", "text-[#ffffffde]", "letter-spacing-[2px]", "max-md:translate-y-[30px]"].join(" ");
 
   return (
     <header className={headerStyling}>
       <nav className={navStyling}>
         <Link to="/">
-          <p className={websiteNameStyling}>Almond-Budgets</p>
+          <p className={websiteNameStyling}>ALMOND<span className="text-[#c1514a]">-BUDGETS</span></p>
         </Link>
-        <div className={navigationLinksStyling  + " mt-[8px] h-[26px]"}>
-          <NavLinksMenu/>
-        </div>
       </nav>
     </header>
   );

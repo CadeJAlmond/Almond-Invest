@@ -26,16 +26,19 @@ import * as d3 from "d3";
 export default function RetirementPredictionChart({
   children,
   stockGainsPerYear,
+  initialBalance,
   annualIncome,
   percentageOfIncomeToInvest,
   age,
-  rothIra,
+  isRothIRA,
 }) {
   // -==== RETIREMENT PROJECTION GLOBAL VARIABLES ====-
   // State for retirement projection simulation math
   const [retirementEarnings, setRetirementFunds] = useState([]);
   const [totalTaxesPaid, setTaxesPaid] = useState([]);
-  
+
+  const [isStatsCollapsed, setIsStatsCollapsed] = useState(false);
+
   const [graphDimensions, setGraphDimensions] = useState({ height: 0, width: 0 });
   const sizeRef = useRef();
 
@@ -44,28 +47,28 @@ export default function RetirementPredictionChart({
 
   const ANIMATION_DURATION = 450;
 
-  const lineChartCutOff = 300;
+  const lineChartCutOff = 0;
 
-  const MARGIN = { left: 75, bottom: 85, top: 150, right: -20 };
-  const PHONE_MARGIN = { left: 55, bottom: 45, top: 115, right: 0 };
-  const INNER_MARGIN = { left: 45, bottom: 30 };
+  const MARGIN = { left: 45, bottom: 0, top: 150, right: 40 };
+  const PHONE_MARGIN = { left: 15, bottom: 45, top: 115, right: 0 };
+  const INNER_MARGIN = { left: 55, bottom: 0 };
 
   const getMarginOffScreenSize = () => {
     const svgWidth = sizeRef.current?.clientWidth || 0;
     const svgHeight = sizeRef.current?.clientHeight || 0;
 
     const phoneDisplay = svgWidth < 800;
-    const CURRENT_MARGIN = phoneDisplay ? PHONE_MARGIN : MARGIN ;
+    const CURRENT_MARGIN = phoneDisplay ? PHONE_MARGIN : MARGIN;
 
     return { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight };
   };
-  
+
   const getGraphDimensions = () => {
     const { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight } = getMarginOffScreenSize();
 
     const currentLineChartCutOff = !phoneDisplay ? lineChartCutOff : 30;
     const height = svgHeight - CURRENT_MARGIN.top - CURRENT_MARGIN.bottom;
-    const width = svgWidth - CURRENT_MARGIN.left - CURRENT_MARGIN.right - currentLineChartCutOff;
+    const width = svgWidth;
 
     return { height, width };
   };
@@ -78,8 +81,20 @@ export default function RetirementPredictionChart({
   useLayoutEffect(() => {
     updateGraphDimensions();
 
-    window.addEventListener("resize", updateGraphDimensions);
-    return () => window.removeEventListener("resize", updateGraphDimensions);
+    const resizeObserver = new ResizeObserver(() => {
+      //updateGraphDimensions();
+    });
+
+    if (sizeRef.current) {
+      resizeObserver.observe(sizeRef.current);
+    }
+
+    return () => {
+      if (sizeRef.current) {
+        resizeObserver.unobserve(sizeRef.current);
+      }
+      resizeObserver.disconnect();
+    };
   }, []);
 
   // If for some reason data for the simulation wasn't included
@@ -167,10 +182,10 @@ export default function RetirementPredictionChart({
    * @param { Number } annualInvestment  : The amount of money invested into a retirement
    *    account every year.
    *
-   * @return {Array} : Statistics such as [the amount of money earned, taxesPaid, and is rothIra]
+   * @return {Array} : Statistics such as [the amount of money earned, taxesPaid, and is isRothIRA]
    *    from investing in the stock market until the User reaches their retirement age.
    */
-  const calculateEarning = (initialIncome) => {
+  const calculateEarnings = (initialIncome) => {
     const earnings = [calculateCompoundEarnings(initialIncome)];
     let totalTaxedIncome = [0];
 
@@ -192,20 +207,20 @@ export default function RetirementPredictionChart({
     const yearsToRetirement = 65 - age;
     for (let i = 1; i <= yearsToRetirement; i++) {
       // Get tax data
-      const [updatedTaxBrackets, taxBracket] = rothIra ? 
-          getTaxBracket(taxBrackets, 0, annualIncome) : [taxBrackets, 0];
+      const [updatedTaxBrackets, taxBracket] = isRothIRA ?
+        getTaxBracket(taxBrackets, 0, annualIncome) : [taxBrackets, 0];
 
       // Apply and record relevant tax info to computed data
       taxBrackets = updatedTaxBrackets;
       const taxedIncome = incomeToInvestAnnually * (1 - taxBracket);
 
-      totalTaxedIncome.push( totalTaxedIncome.at(-1) + incomeToInvestAnnually - taxedIncome);
+      totalTaxedIncome.push(totalTaxedIncome.at(-1) + incomeToInvestAnnually - taxedIncome);
 
       // Calculate compound interest
       let earned = calculateCompoundEarnings(earnings[i - 1] + taxedIncome);
 
       // Apply taxes to a non-IRA account
-      if (!rothIra && i == yearsToRetirement) {
+      if (!isRothIRA && i == yearsToRetirement) {
         const [updatedTaxBrackets, taxBracket] = getTaxBracket(
           taxBrackets, 0, earnings.at(-1)
         );
@@ -217,7 +232,7 @@ export default function RetirementPredictionChart({
       earnings.push(earned);
     }
 
-    return [earnings, totalTaxedIncome, rothIra];
+    return [earnings, totalTaxedIncome, isRothIRA];
   };
 
   // -==== RENDERING COMPONENTS OF THE RETIREMENT CHART ====-
@@ -226,16 +241,17 @@ export default function RetirementPredictionChart({
     stockGainsPerYear,
     annualIncome,
     incomeToInvestAnnually,
+    initialBalance,
     age,
-    rothIra,
+    isRothIRA,
   ];
 
   // Recompute the retirement earnings if any data is changed relevant to the
   // simulation
   useEffect(() => {
-    const [earnings, taxedIncome] = calculateEarning(0);
+    const [earnings, taxedIncome] = calculateEarnings(initialBalance);
 
-    // Update data
+    // Update state
     setRetirementFunds(earnings);
     setTaxesPaid(taxedIncome);
   }, [setRetirementFunds, ...simulationData]);
@@ -248,11 +264,11 @@ export default function RetirementPredictionChart({
   const abbreviateNumbers = (num) => {
     const lengthOfNumber = `${num}`.length;
 
-    if (lengthOfNumber > 12) return `${num / 1_000_000_000_000} TRIL`;
+    if (lengthOfNumber > 12) return `${num / 1_000_000_000_000} TR`;
 
-    if (lengthOfNumber > 9) return `${num / 1_000_000_000} BIL`;
+    if (lengthOfNumber > 9) return `${num / 1_000_000_000} B`;
 
-    if (lengthOfNumber > 6) return `${num / 1_000_000} MIL`;
+    if (lengthOfNumber > 6) return `${num / 1_000_000} M`;
 
     return `${num / 1_000} K`;
   };
@@ -264,7 +280,7 @@ export default function RetirementPredictionChart({
    *   chart on the users screen.
    */
   const setupChartAxis = (graphHeight, phoneDisplay) => {
-    const yMax = rothIra ? retirementEarnings.at(-1) : retirementEarnings.at(-2);
+    const yMax = isRothIRA ? retirementEarnings.at(-1) : retirementEarnings.at(-2);
 
     const yScale = d3.scaleLinear()
       .domain([1, yMax])
@@ -272,17 +288,17 @@ export default function RetirementPredictionChart({
       .nice();
 
     const yAxis = d3.axisLeft(yScale);
-    yAxis.tickFormat((d, i) => `$${abbreviateNumbers(d)}`);
+    yAxis.tickFormat((d) => `$${abbreviateNumbers(d)}`).ticks(5);
 
     const xScale = d3.scaleLinear()
       .domain([0, retirementEarnings.length - 1])
-      .range([INNER_MARGIN.left, width]);
+      .range([INNER_MARGIN.left, width + INNER_MARGIN.left - MARGIN.right]);
 
     const xAxis = d3.axisBottom(xScale);
     xAxis.tickFormat((d, i) => convertNumberToDate(d));
 
-     // Limit the number of ticks on x-axis for phone display
-     if (phoneDisplay) {
+    // Limit the number of ticks on x-axis for phone display
+    if (phoneDisplay) {
       xAxis.ticks(6);
     }
 
@@ -334,10 +350,10 @@ export default function RetirementPredictionChart({
       .y1(graphHeight);
 
     // Attach the data to the gradient area
-    let areaGroup = svg.selectAll(".areaPath").data([retirementEarnings]);
+    const areaGroup = svg.selectAll(".areaPath").data([retirementEarnings]);
 
     // Create and append the area path
-    areaGroup = areaGroup.enter()
+    areaGroup.enter()
       .append("path")
       .attr("class", "areaPath")
       .attr("d", initialArea)
@@ -387,7 +403,7 @@ export default function RetirementPredictionChart({
       .attr("fill", "none")
       .attr("stroke-width", 2.75)
       .attr("stroke", "#c1514a")
-      .style("opacity", 0.85);
+      .style("opacity", 1);
 
     lineGroup.exit().remove();
 
@@ -399,11 +415,10 @@ export default function RetirementPredictionChart({
       .attr("class", "vertical-grid")
       .attr("x1", INNER_MARGIN.left)
       .attr("y1", (d) => yScale(d))
-      .attr("x2", width)
+      .attr("x2", width + INNER_MARGIN.left - MARGIN.right)
       .attr("y2", (d) => yScale(d))
-      .style("stroke", "gray")
-      .style("stroke-width", 0.5)
-      .style("stroke-dasharray", "3 3");
+      .style("stroke", "#363b43ff")
+      .style("stroke-width", 0.75);
 
     return svg;
   };
@@ -547,7 +562,7 @@ export default function RetirementPredictionChart({
         .style("padding", "2px");
 
       // Move the overlay rectangle
-      const rectWidth  = 275;
+      const rectWidth = 275;
       const rectHeight = 110;
       const cornerRadius = 5;
 
@@ -566,14 +581,14 @@ export default function RetirementPredictionChart({
   // -==== CREATING THE FULL CHART ====-
 
   useEffect(() => {
-    const { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight } = getMarginOffScreenSize();
-    const widthPadding  = CURRENT_MARGIN.left + CURRENT_MARGIN.right + INNER_MARGIN.left;
+    const { CURRENT_MARGIN, phoneDisplay } = getMarginOffScreenSize();
+    const widthPadding = CURRENT_MARGIN.left + CURRENT_MARGIN.right + INNER_MARGIN.left;
     const heightPadding = CURRENT_MARGIN.top + CURRENT_MARGIN.bottom;
 
     d3.select("#Linechart-div")
       .select("svg")
       .attr("font-family", "League Spartan")
-      .attr("width", (width ? width : 0) + widthPadding )
+      .attr("width", (width ? width : 0) + widthPadding)
       .attr("height", (height ? height : 0) + heightPadding)
       .select("g")
       .attr("transform", "translate(" + CURRENT_MARGIN.left + "," + CURRENT_MARGIN.top + ")");
@@ -589,8 +604,8 @@ export default function RetirementPredictionChart({
 
       // Append the axis elements first
       svg.append("g")
-      .classed("yAxis", true)
-      .attr("transform", `translate(${INNER_MARGIN.left}, 0)`);
+        .classed("yAxis", true)
+        .attr("transform", `translate(${INNER_MARGIN.left}, 0)`);
 
       svg.append("g")
         .classed("xAxis", true)
@@ -601,23 +616,19 @@ export default function RetirementPredictionChart({
         .call(yAxis)
         .attr("font-size", "16")
         .style("color", "rgba(244, 244, 245, 0.8)");
-      
+
       svg.select(".xAxis")
         .call(xAxis)
         .attr("font-size", "16")
         .style("color", "rgba(244, 244, 245, 0.8)");
 
-      // Add labels to the axis's
-      svg.select("#xAxisLabel")
-        .text("Year")
-        .attr("x", width / 2)
-        .attr("y", height + 40)
-        .style("font-size", "22px")
-        .style("fill", "rgba(244, 244, 245, 0.9)");
+      svg.select(".yAxis").select("path").style("stroke", "rgba(0,0,0,0)");
+
+      svg.select(".xAxis").select("path").style("stroke", "rgba(0,0,0,0)");
 
       svg.select("#yAxisLabel")
-        .text("Money made")
-        .attr("x", -MARGIN.left / 4)
+        .text("Estimated portfolio value")
+        .attr("x", (-MARGIN.left / 5) + 15)
         .attr("y", -MARGIN.top / 5)
         .style("font-size", "22px")
         .style("fill", "rgba(244, 244, 245, 0.9)");
@@ -636,16 +647,22 @@ export default function RetirementPredictionChart({
     }
   }, [retirementEarnings, graphDimensions]);
 
-  function RetirementStatisticCard({statsInfo}) {
-    const {label, value, spanStyling, statsCardStyling} = statsInfo
+  function RetirementStatisticCard({ statsInfo }) {
+    const { label, value, spanStyling, statsCardStyling } = statsInfo
     return (
       <div className={statsCardStyling} key={label + value}>
-        <p className="text-[17.5px] text-[#ebebed]/90 tracking-wide w-[97%]">
-          <strong>{label}</strong>
+        {/** Stat Title **/}
+        <p className="text-xs text-[#ebebed]/70 font-medium tracking-wider uppercase mb-1">
+          {label.replace(" :", "").replace(":", "").trim()}
         </p>
+
+        {/** Stat Value **/}
         <span className={spanStyling}>
-          <p className="ml-[6px]">{value}</p>
+          <p>{value}</p>
         </span>
+
+        {/** Colored Divider **/}
+        <div className="min-w-[15px] max-w-[50px] min-h-[5px] bg-[#c1514a] rounded"></div>
       </div>
     )
   }
@@ -662,76 +679,91 @@ export default function RetirementPredictionChart({
 
     // Create the stylings for the stats-side bar
     const statsStyling = [
-      "mt-[4%]",
       "h-[100%]",
+      "translate-y-[-15px]",
       "flex",
       "flex-col",
       "gap-[3%]",
-      "justify-start",
+      "justify-end",
+      isStatsCollapsed ? "w-[0px] overflow-hidden opacity-0" : "w-full opacity-100",
+      "transition-all duration-300",
       "max-md:gap-[15px] max-md:grid-cols-2 max-md:grid"
     ].join(" ");
 
     const statsCardStyling = [
       "flex",
       "flex-col",
-      "gap-[4px]",
       "justify-center",
-      "h-[14%]",
-      "w-[90%]",
-      "border-l-[5px]",
-      "border-l-[#c1514a]/75",
-      //"bg-[#c2c5c2]/80",
-      "bg-[#0a0b0d]/50",
-      "pl-[15px]",
-      "rounded-[7.5px]",
-      "max-md:h-[90px] max-md:w-[100%]"
+      "min-h-[55px]",
+      "w-[95%]",
+      "bg-[#16181D]",
+      "p-[15px]",
+      "rounded-b-[7.5px]",
+      "max-md:h-[90px] max-md:w-[100%]",
+      "border-[#2d323b]/70 border-[2px]"
     ].join(" ");
 
     const spanStyling = [
-      "text-[20px]",
-      "text-[#cb372d]",
-      "bg-[#c1514a]/10",
+      "text-[22px]",
+      "text-[#ffffffde]",
+    ].join(" ");
+
+    const containerStyling = [
+      "relative",
+      "transition-all duration-300",
+      isStatsCollapsed ? "w-[20px]" : "w-[300px]",
+      "flex-shrink-0"
     ].join(" ");
 
     return (
-      <div id="Overview-div" className={statsStyling}>
-        {/* Display each statistic onto the sidebar */}
-        {retirementStats.map((statsInfo) => {
-          // Inject the styling into the statsInfo
-          statsInfo["statsCardStyling"] = statsCardStyling
-          statsInfo["spanStyling"]      = spanStyling
+      <div className={containerStyling}>
+        <button
+          onClick={() => setIsStatsCollapsed(!isStatsCollapsed)}
+          className="absolute top-6 -left-12 z-50 bg-[#F1655C] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md border-[2px] border-[#16181D] hover:scale-110 transition-transform cursor-pointer"
+        >
+          {isStatsCollapsed ? "<" : ">"}
+        </button>
+        <div id="Overview-div" className={statsStyling}>
+          {/* Display each statistic onto the sidebar */}
+          {retirementStats.map((statsInfo) => {
+            // Inject the styling into the statsInfo
+            statsInfo["statsCardStyling"] = statsCardStyling
+            statsInfo["spanStyling"] = spanStyling
 
-          return (
-            <RetirementStatisticCard statsInfo={statsInfo}/>
-          );
-        })}
+            return (
+              <RetirementStatisticCard statsInfo={statsInfo} />
+            );
+          })}
+        </div>
       </div>
     );
   }
 
   const dashboardSectionStyling = [
     "bg-[#101215]/75",
-    "w-[calc(90vw-360px)] max-xl:w-[87.5vw]",
-    "max-h-[80vh] min-h-[80vh] max-xl:max-h-[400px] max-2xl:min-h-[400px]",
+    "ml-[15px]",
+    "w-[calc(88vw-360px)] max-xl:w-[87.5vw]",
+    "max-h-[83vh] min-h-[83vh] max-xl:max-h-[400px] max-2xl:min-h-[400px]",
     "flex max-xl:flex-col",
     "max-md:rounded-[15px]"
   ].join(" ");
 
   const dashboardTitleStyling = [
-    "absolute", 
-    "text-3xl", 
-    "mt-[2.25%]", 
+    "absolute",
+    "text-3xl",
+    "mt-[2.25%]",
     "ml-[1.5%]",
     "text-[#f4f4f5]",
     "max-md:ml-[12.5%]",
     "max-md:mt-[5%]",
+    "z-10" // Make sure it sits above linechart gradient if necessary
   ].join(" ")
 
   return (
     <>
-      <section ref={sizeRef} className={dashboardSectionStyling}>
+      <section className={dashboardSectionStyling}>
         {children}
-        <div id="Linechart-div" className={children ? "blur-[0.675px]" : ""}>
+        <div id="Linechart-div" className={`relative flex-grow h-full ${children ? "blur-[0.675px]" : ""}`} ref={sizeRef}>
           {/* Create heading text for the projection chart */}
           <strong>
             <h3 className={dashboardTitleStyling}>

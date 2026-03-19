@@ -5,15 +5,17 @@
  * -Referenced : MainDashboard.js
  */
 
-/* --=== Imports ===-- */
 import Button from "./Button";
 import { buttonBorderRadius } from "../AppStyling_SubComponents";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 /**
  * @param { JSX } children : The form which exists within the sidebar.
  */
-export default function ChartsSideBar({ children  }) {
+export default function ChartsSideBar({ children }) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   // Styles for the general layout of the sidebar's navigation
   const sideBarNav = [
     "flex",
@@ -23,35 +25,43 @@ export default function ChartsSideBar({ children  }) {
   ].join(" ");
 
   // Return a navigation menu for the
-  function SideBarHeader() {
+  function SideBarHeader({ collapseHeader }) {
+    const { isCollapsed, setIsCollapsed } = collapseHeader;
+
     const sideBarHeaderStyling = [
       buttonBorderRadius,
-      "h-[70px]",
-      "w-[calc(80% + 20px)]",
-      "bg-[#0a0b0d]/85",
-      "mx-[-10px]",
+      "h-[65px]",
+      "w-[calc(100%-20px)]",
+      "mx-auto",
       "flex",
       "justify-center",
-      "flex-wrap",
       "items-center",
       "gap-4",
       "text-[#f4f4f5]",
     ].join(" ");
 
-    const sideBarHeaderBtnStylingConfig = {
-      color: "bg-[#F1655C]/45",
-    };
-
     return (
       <nav className={sideBarNav}>
         {/* Render buttons for chart / page navigation */}
         <header className={sideBarHeaderStyling}>
-          <Link to="/" className="">
-            <Button>Retirement</Button>
-          </Link>
-          <Link to="/budgets">
-            <Button>Budgets</Button>
-          </Link>
+          {
+            !isCollapsed && (
+              <>
+                <Link to="/" className="">
+                  <Button>Retirement</Button>
+                </Link>
+                <Link to="/budgets">
+                  <Button>Budgets</Button>
+                </Link>
+              </>
+            )
+          }
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="z-50 bg-[#F1655C] text-white rounded-[5px] w-8 h-8 flex items-center justify-center text-xs shadow-md border-[2px] border-[#16181D] hover:scale-110 transition-transform cursor-pointer"
+          >
+            {isCollapsed ? ">" : "<"}
+          </button>
         </header>
       </nav>
     );
@@ -60,18 +70,24 @@ export default function ChartsSideBar({ children  }) {
   const sideBarStyling = [
     buttonBorderRadius,
     "max-h-[80vh] min-h-[80vh] max-xl:max-h-[68.5vh] max-xl:min-h-[68.5vh]",
-    "w-[364px] max-xl:w-[87.5vw]",
-    "bg-[#0a0b0d]/65",
+    isCollapsed ? "w-[60px]" : "w-[425px] max-xl:w-[87.5vw]",
+    "bg-[#16181D]",
+    "border-[2px] border-[#2d323b]/90",
     "px-[10px]",
+    "mt-[15px]",
     "flex",
     "flex-col",
     "content-center",
+    "relative",
+    "transition-all duration-300"
   ].join(" ");
 
   return (
     <aside className={sideBarStyling}>
-      <SideBarHeader />
-      {children}
+      <div className="h-full w-full flex flex-col pt-4 transition-opacity duration-300">
+        <SideBarHeader collapseHeader={{ isCollapsed, setIsCollapsed }} />
+        {!isCollapsed && children}
+      </div>
     </aside>
   );
 }

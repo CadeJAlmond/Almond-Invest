@@ -14,11 +14,11 @@ import { applyCustomStyles } from "./ApplyCustomStyles";
  * @param {String} inputName 
  * @returns : A populated instance of a basic input
  */
-export function createBasicInput(inputName, type = "number", value, max, min, text, styles = {} ){
+export function createBasicInput(inputName, type = "number", value, max, min, text, styles = {}) {
   return {
-    FormInputComponent : Input,
-    formInputProps : {
-      [inputName]: { max, min, value, styles, type, text},
+    FormInputComponent: Input,
+    formInputProps: {
+      [inputName]: { max, min, value, styles, type, text },
     }
   }
 }
@@ -51,10 +51,8 @@ export default function Input({
   const defaultStylings = {
     h: "min-h-[32.5px] max-h-[32.5px]",
     w: "w-[85%]",
-    pl: "pl-[10px]",
+    pl: "pl-[0px]",
     bg: "bg-[transparent]",
-    b : "border-[1.5px] border-[#f4f4f5]/80",
-    border: "rounded-[5px]",
     text: "text-[17px] text-[#f4f4f5]/80",
   };
   // Apply custom styles on top of the default styles
