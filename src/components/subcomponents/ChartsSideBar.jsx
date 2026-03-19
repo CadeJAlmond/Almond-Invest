@@ -58,7 +58,7 @@ export default function ChartsSideBar({ children }) {
           }
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="z-50 bg-[#F1655C] text-white rounded-[5px] w-8 h-8 flex items-center justify-center text-xs shadow-md border-[2px] border-[#16181D] hover:scale-110 transition-transform cursor-pointer"
+            className="z-50 bg-[#F1655C]/65 text-white rounded-[5px] min-w-8 h-8 flex items-center justify-center text-xs shadow-md border-[2px] border-[#16181D] hover:scale-110 transition-transform cursor-pointer"
           >
             {isCollapsed ? ">" : "<"}
           </button>
@@ -69,7 +69,7 @@ export default function ChartsSideBar({ children }) {
 
   const sideBarStyling = [
     buttonBorderRadius,
-    "max-h-[80vh] min-h-[80vh] max-xl:max-h-[68.5vh] max-xl:min-h-[68.5vh]",
+    "max-h-[80vh] min-h-[80vh] max-md:min-h-[600px]",
     isCollapsed ? "w-[60px]" : "w-[425px] max-xl:w-[87.5vw]",
     "bg-[#16181D]",
     "border-[2px] border-[#2d323b]/90",
@@ -79,7 +79,8 @@ export default function ChartsSideBar({ children }) {
     "flex-col",
     "content-center",
     "relative",
-    "transition-all duration-300"
+    "transition-all duration-300",
+    "max-md:translate-x-[3.5vw]"
   ].join(" ");
 
   return (
