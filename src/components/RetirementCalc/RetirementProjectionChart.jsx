@@ -47,8 +47,6 @@ export default function RetirementPredictionChart({
 
   const ANIMATION_DURATION = 450;
 
-  const lineChartCutOff = 0;
-
   const MARGIN = { left: 25, bottom: 0, top: 70, right: 20 };
   const PHONE_MARGIN = { left: 5, bottom: 0, top: 55, right: 0 };
   const INNER_MARGIN = { left: 55, bottom: 20 };
@@ -64,9 +62,8 @@ export default function RetirementPredictionChart({
   };
 
   const getGraphDimensions = () => {
-    const { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight } = getMarginOffScreenSize();
+    const { svgWidth, svgHeight } = getMarginOffScreenSize();
 
-    const currentLineChartCutOff = !phoneDisplay ? lineChartCutOff : 30;
     const height = svgHeight;
     const width  = svgWidth;
 
@@ -186,7 +183,7 @@ export default function RetirementPredictionChart({
    *    from investing in the stock market until the User reaches their retirement age.
    */
   const calculateEarnings = (initialIncome) => {
-    const earnings = [calculateCompoundEarnings(initialIncome)];
+    const earnings = [calculateCompoundEarnings(initialIncome + incomeToInvestAnnually)];
     let totalTaxedIncome = [0];
 
     /**
