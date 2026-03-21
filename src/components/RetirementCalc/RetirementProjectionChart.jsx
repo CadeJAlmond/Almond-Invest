@@ -155,8 +155,7 @@ export default function RetirementPredictionChart({
     // Reverse for-loop through the tax-brackets starting from the highest brackets
     for (let i = taxBracketPercentages.length - 1; i >= 0; i--) {
       const currentTaxBracketPercent = taxBracketPercentages[i];
-      const taxBracketIncomeThreshold =
-        currentTaxBrackets[currentTaxBracketPercent];
+      const taxBracketIncomeThreshold = currentTaxBrackets[currentTaxBracketPercent];
 
       updatedTaxBrackets[currentTaxBracketPercent] = taxBracketIncomeThreshold;
 
@@ -183,9 +182,7 @@ export default function RetirementPredictionChart({
    *    from investing in the stock market until the User reaches their retirement age.
    */
   const calculateEarnings = (initialIncome) => {
-    const earnings = [calculateCompoundEarnings(initialIncome + incomeToInvestAnnually)];
-    let totalTaxedIncome = [0];
-
+    
     /**
      * Tax brackets derived from :
      * https://www.nerdwallet.com/article/taxes/federal-income-tax-brackets
@@ -201,11 +198,16 @@ export default function RetirementPredictionChart({
       0.37: 609_351,
     };
 
+
+    let [updatedTaxBrackets, taxBracket] = isRothIRA ? getTaxBracket(taxBrackets, 0, annualIncome) : [taxBrackets, 0];
+
+    const earnings = [calculateCompoundEarnings(initialIncome + (incomeToInvestAnnually * (1 - taxBracket)))];
+    let totalTaxedIncome = [0];
+
     const yearsToRetirement = 65 - age;
     for (let i = 1; i <= yearsToRetirement; i++) {
       // Get tax data
-      const [updatedTaxBrackets, taxBracket] = isRothIRA ?
-        getTaxBracket(taxBrackets, 0, annualIncome) : [taxBrackets, 0];
+      [updatedTaxBrackets, taxBracket] = isRothIRA ? getTaxBracket(taxBrackets, 0, annualIncome) : [taxBrackets, 0];
 
       // Apply and record relevant tax info to computed data
       taxBrackets = updatedTaxBrackets;
