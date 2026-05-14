@@ -80,11 +80,11 @@ export default function RetirementDashboard() {
   const dashboardStyling = [
     "bg-[#0F1115]",
     "w-[100%]",
-    "h-[calc(100%-60px)] max-xl:h-[1450px]",
+    "h-[calc(100%-60px)] max-md:h-[1600px]",
     "pt-[2vh]",
     "pl-[1.5vw]",
     "flex",
-    "flex max-xl:flex-col max-xl:gap-4"
+    "max-md:flex-col"
   ].join(" ");
 
   // Create a 2-second lag when to update the graph when form values are updated

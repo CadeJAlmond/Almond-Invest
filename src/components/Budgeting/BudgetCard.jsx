@@ -34,12 +34,10 @@ export default function BudgetCard({budgetName, budgetPercent, onEdit, onDelete 
   // -- Stylings ---
   const bucketCardStyling = [
     textWhiteLight,
-    "border-l-[3px]",
-    `border-[#F1655C]`,
     "rounded-[4px]",
     "w-[90%]",
     "min-h-[55px] max-h-[55px]",
-    "bg-[#3f3f4671]",
+    "bg-[#2d323b]/70",
     "flex",
   ].join(" ");
 

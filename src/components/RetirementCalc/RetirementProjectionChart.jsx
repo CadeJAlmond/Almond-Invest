@@ -48,11 +48,9 @@ export default function RetirementPredictionChart({
 
   const ANIMATION_DURATION = 450;
 
-  const lineChartCutOff = 0;
-
-  const MARGIN = { left: 45, bottom: 0, top: 150, right: 40 };
-  const PHONE_MARGIN = { left: 15, bottom: 45, top: 115, right: 0 };
-  const INNER_MARGIN = { left: 55, bottom: 0 };
+  const MARGIN = { left: 25, bottom: 0, top: 70, right: 20 };
+  const PHONE_MARGIN = { left: 5, bottom: 0, top: 55, right: 0 };
+  const INNER_MARGIN = { left: 55, bottom: 20 };
 
   const getMarginOffScreenSize = () => {
     const svgWidth = sizeRef.current?.clientWidth || 0;
@@ -65,10 +63,9 @@ export default function RetirementPredictionChart({
   };
 
   const getGraphDimensions = () => {
-    const { CURRENT_MARGIN, phoneDisplay, svgWidth, svgHeight } = getMarginOffScreenSize();
+    const { svgWidth, svgHeight } = getMarginOffScreenSize();
 
-    const currentLineChartCutOff = !phoneDisplay ? lineChartCutOff : 30;
-    const height = svgHeight - CURRENT_MARGIN.top - CURRENT_MARGIN.bottom;
+    const height = svgHeight;
     const width = svgWidth;
 
     return { height, width };
@@ -161,8 +158,7 @@ export default function RetirementPredictionChart({
     // Reverse for-loop through the tax-brackets starting from the highest brackets
     for (let i = taxBracketPercentages.length - 1; i >= 0; i--) {
       const currentTaxBracketPercent = taxBracketPercentages[i];
-      const taxBracketIncomeThreshold =
-        currentTaxBrackets[currentTaxBracketPercent];
+      const taxBracketIncomeThreshold = currentTaxBrackets[currentTaxBracketPercent];
 
       updatedTaxBrackets[currentTaxBracketPercent] = taxBracketIncomeThreshold;
 
@@ -189,8 +185,6 @@ export default function RetirementPredictionChart({
    *    from investing in the stock market until the User reaches their retirement age.
    */
   const calculateEarnings = (initialIncome) => {
-    const earnings = [calculateCompoundEarnings(initialIncome)];
-    let totalTaxedIncome = [0];
 
     /**
      * Tax brackets derived from :
@@ -275,12 +269,12 @@ export default function RetirementPredictionChart({
    * @returns xAxis, yAxis, xScale, yScale to use to map numbers onto the
    *   chart on the users screen.
    */
-  const setupChartAxis = (graphHeight, phoneDisplay) => {
+  const setupChartAxis = (graphHeight, phoneDisplay, CURRENT_MARGIN) => {
     const yMax = isRothIRA ? retirementEarnings.at(-1) : retirementEarnings.at(-2);
 
     const yScale = d3.scaleLinear()
       .domain([1, yMax])
-      .range([graphHeight, 0])
+      .range([graphHeight, CURRENT_MARGIN.top])
       .nice();
 
     const yAxis = d3.axisLeft(yScale);
@@ -288,7 +282,7 @@ export default function RetirementPredictionChart({
 
     const xScale = d3.scaleLinear()
       .domain([0, retirementEarnings.length - 1])
-      .range([INNER_MARGIN.left, width + INNER_MARGIN.left - MARGIN.right]);
+      .range([INNER_MARGIN.left, width - INNER_MARGIN.left]);
 
     const xAxis = d3.axisBottom(xScale);
     xAxis.tickFormat((d, i) => convertNumberToDate(d));
@@ -411,7 +405,7 @@ export default function RetirementPredictionChart({
       .attr("class", "vertical-grid")
       .attr("x1", INNER_MARGIN.left)
       .attr("y1", (d) => yScale(d))
-      .attr("x2", width + INNER_MARGIN.left - MARGIN.right)
+      .attr("x2", width - INNER_MARGIN.left)
       .attr("y2", (d) => yScale(d))
       .style("stroke", "#363b43ff")
       .style("stroke-width", 0.75);
@@ -519,20 +513,20 @@ export default function RetirementPredictionChart({
    *    chart
    * @param { * } height : Height of the chart
    */
-  const graphOnHover = (event, svg, xScale, yScale, height) => {
+  const graphOnHover = (event, svg, xScale, yScale, height, CURRENT_MARGIN) => {
     const clientX = d3.pointer(event)[0] - MARGIN.left;
 
-    if (clientX > INNER_MARGIN.left && clientX < width) {
+    if (clientX > (INNER_MARGIN.left) && clientX < (width - INNER_MARGIN.left)) {
       // Set the line position
       svg.select("#overlay")
         .select("line")
         .style("opacity", 0.45)
-        .attr("stroke", "gray")
+        .attr("stroke", "rgba(244, 244, 245, 0.9)")
         .style("stroke-width", 2.25)
         .attr("x1", clientX)
         .attr("x2", clientX)
         .attr("y1", height - INNER_MARGIN.bottom)
-        .attr("y2", 0);
+        .attr("y2", CURRENT_MARGIN.top);
 
       // Compute the values of the mouses position
       const age = Math.round(xScale.invert(clientX));
@@ -552,7 +546,8 @@ export default function RetirementPredictionChart({
         )
         .text((d) => d.label + d.value)
         .attr("x", flipOverlay ? clientX - 255 : clientX + 10)
-        .attr("y", (d, i) => 16.5 + i * 18)
+        .attr("y", (d, i) => 22.5 + i * 18)
+        .attr("transform", `translate(0, ${CURRENT_MARGIN.top})`)
         .style("fill", "rgba(244, 244, 245, 1)")
         .style("font-size", "15px")
         .style("padding", "2px");
@@ -567,7 +562,7 @@ export default function RetirementPredictionChart({
         .attr("width", rectWidth)
         .attr("height", rectHeight)
         .attr("x", flipOverlay ? clientX - rectWidth : clientX)
-        .attr("y", -5)
+        .attr("y", CURRENT_MARGIN.top)
         .attr("fill", "gray")
         .attr("rx", cornerRadius) // Set the x-radius for rounded corners
         .attr("ry", cornerRadius) // Set the y-radius for rounded corners
@@ -577,26 +572,24 @@ export default function RetirementPredictionChart({
   // -==== CREATING THE FULL CHART ====-
 
   useEffect(() => {
-    const { CURRENT_MARGIN, phoneDisplay } = getMarginOffScreenSize();
-    const widthPadding = CURRENT_MARGIN.left + CURRENT_MARGIN.right + INNER_MARGIN.left;
-    const heightPadding = CURRENT_MARGIN.top + CURRENT_MARGIN.bottom;
+    const { CURRENT_MARGIN, phoneDisplay, svgHeight, svgWidth } = getMarginOffScreenSize();
 
     d3.select("#Linechart-div")
       .select("svg")
       .attr("font-family", "League Spartan")
-      .attr("width", (width ? width : 0) + widthPadding)
-      .attr("height", (height ? height : 0) + heightPadding)
+      .attr("width", (svgWidth))
+      .attr("height", (svgHeight))
       .select("g")
-      .attr("transform", "translate(" + CURRENT_MARGIN.left + "," + CURRENT_MARGIN.top + ")");
+      .attr("transform", "translate(" + CURRENT_MARGIN.left + "," + 0 + ")");
 
     if (retirementEarnings.length) {
       let svg = d3.select("#Linechart-div").select("svg").select("g");
       svg.append("g").attr("id", "overlay").append("line");
       svg.select("#overlay").append("rect");
 
-      const graphHeight = height - INNER_MARGIN.bottom;
+      const graphHeight = height - (INNER_MARGIN.bottom);
 
-      const [yAxis, xAxis, yScale, xScale] = setupChartAxis(graphHeight, phoneDisplay);
+      const [yAxis, xAxis, yScale, xScale] = setupChartAxis(graphHeight, phoneDisplay, CURRENT_MARGIN);
 
       // Append the axis elements first
       svg.append("g")
@@ -605,7 +598,7 @@ export default function RetirementPredictionChart({
 
       svg.append("g")
         .classed("xAxis", true)
-        .attr("transform", `translate(0, ${graphHeight})`);
+        .attr("transform", `translate(0, ${height - INNER_MARGIN.bottom})`);
 
       // Call the axis"s
       svg.select(".yAxis")
@@ -624,8 +617,8 @@ export default function RetirementPredictionChart({
 
       svg.select("#yAxisLabel")
         .text("Estimated portfolio value")
-        .attr("x", (-MARGIN.left / 5) + 15)
-        .attr("y", -MARGIN.top / 5)
+        .attr("x", (-MARGIN.left / 5) + 5)
+        .attr("y", MARGIN.top - 35)
         .style("font-size", "22px")
         .style("fill", "rgba(244, 244, 245, 0.9)");
 
@@ -639,7 +632,7 @@ export default function RetirementPredictionChart({
       // Attach on On-Click listener
       d3.select("#Linechart-div")
         .select("svg")
-        .on("mousemove", (e) => graphOnHover(e, svg, xScale, yScale, height));
+        .on("mousemove", (e) => graphOnHover(e, svg, xScale, yScale, height, CURRENT_MARGIN));
     }
   }, [retirementEarnings, graphDimensions]);
 
@@ -675,11 +668,10 @@ export default function RetirementPredictionChart({
 
     // Create the stylings for the stats-side bar
     const statsStyling = [
-      "h-[100%]",
-      "translate-y-[-15px]",
+      "translate-y-[calc(50vh-330px)]",
       "flex",
       "flex-col",
-      "gap-[3%]",
+      "gap-[20px]",
       "justify-end",
       isStatsCollapsed ? "w-[0px] overflow-hidden opacity-0" : "w-full opacity-100",
       "transition-all duration-300",
@@ -707,7 +699,7 @@ export default function RetirementPredictionChart({
     const containerStyling = [
       "relative",
       "transition-all duration-300",
-      isStatsCollapsed ? "w-[20px]" : "w-[300px]",
+      isStatsCollapsed ? "w-[20px]" : "w-[300px] max-md:w-[85vw]",
       "flex-shrink-0"
     ].join(" ");
 
@@ -737,18 +729,17 @@ export default function RetirementPredictionChart({
 
   const dashboardSectionStyling = [
     "bg-[#101215]/75",
-    "ml-[15px]",
-    "w-[calc(88vw-360px)] max-xl:w-[87.5vw]",
-    "max-h-[83vh] min-h-[83vh] max-xl:max-h-[400px] max-2xl:min-h-[400px]",
+    "ml-[15px] max-md:mt-[55px]",
+    "w-[calc(88vw-260px)] max-md:w-[91.5vw]",
+    "h-[74.5vh] max-md:h-[600px]",
     "flex max-xl:flex-col",
     "max-md:rounded-[15px]"
   ].join(" ");
 
   const dashboardTitleStyling = [
-    "absolute",
     "text-3xl",
-    "mt-[2.25%]",
-    "ml-[1.5%]",
+    "mt-[1.25%]",
+    "ml-[1.5%] max-md:ml-[5px]",
     "text-[#f4f4f5]",
     "max-md:ml-[12.5%]",
     "max-md:mt-[5%]",
@@ -759,7 +750,7 @@ export default function RetirementPredictionChart({
     <>
       <section className={dashboardSectionStyling}>
         {children}
-        <div id="Linechart-div" className={`relative flex-grow h-full ${children ? "blur-[0.675px]" : ""}`} ref={sizeRef}>
+        <div id="Linechart-div" className={`w-[100%] h-[100%] ${children ? "blur-[0.675px]" : ""}`} ref={sizeRef}>
           {/* Create heading text for the projection chart */}
           <strong>
             <h3 className={dashboardTitleStyling}>

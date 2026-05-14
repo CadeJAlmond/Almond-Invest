@@ -168,11 +168,11 @@ export default function BudgetingDashboard() {
   ].join(" ");
 
   const dashboardStyling = [
-    "bg-[#1B1E23]",
+    "bg-[#0F1115]",
     "w-[100%]",
-    "h-[calc(100%-77px)] max-xl:h-[1300px]",
-    "pt-[5vh]",
-    "pl-[5vw]",
+    "h-[calc(100%-60px)] max-md:h-[1300px]",
+    "pt-[2vh]",
+    "pl-[1.5vw]",
     "flex max-xl:flex-col max-xl:gap-8",
     "overflow-hidden",
   ].join(" ");
@@ -181,9 +181,9 @@ export default function BudgetingDashboard() {
     <main className={dashboardStyling}>
       {/* Render the appropriate Sidebar for the Budget dashboard */}
       <ChartsSideBar setSideBarScreen={navigateToScreen}>
-        <div className="w-[100%] flex justify-center mt-[18px]">
+        <div className="w-[100%] flex justify-start mt-[18px] ml-[10%] max-xl:ml-[0px] max-xl:justify-center">
           <Button
-            styles={{ w: "w-[50%]" }}
+            styles={{ w: "min-w-[70px] w-[130px]", h: "h-[110%]", text: "text-[18px]", px: "px-[0px]" }}
             onClick={() => setAddingBudget(!addingBudget)}
           >
             {addingBudget ? "Cancel" : "Add Budget"}

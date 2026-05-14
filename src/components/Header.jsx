@@ -27,7 +27,7 @@ export default function Header() {
     "mb-[10px]",
   ].join(" ");
 
-  const websiteNameStyling = ["text-2xl", "text-[#ffffffde]", "letter-spacing-[2px]", "max-md:translate-y-[30px]"].join(" ");
+  const websiteNameStyling = ["text-2xl", "text-[#ffffffde]", "letter-spacing-[2px]"].join(" ");
 
   return (
     <header className={headerStyling}>

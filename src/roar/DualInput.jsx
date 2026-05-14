@@ -29,7 +29,7 @@ export default function DualInput({
 }) {
   return (
     <div className="flex flex-col gap-2 w-[100%]">
-      <p className="text-nowrap text-sm font-medium text-[#ffffffcc] flex mb-[6px] tracking-wide flex items-center justify-between">
+      <p className="text-nowrap text-sm font-medium text-[#ffffffcc] flex mb-[6px] tracking-wide flex items-center justify-between max-md:flex max-md:flex-col max-md:items-end">
         {text}
         <Input
           key={`input-${name}`}

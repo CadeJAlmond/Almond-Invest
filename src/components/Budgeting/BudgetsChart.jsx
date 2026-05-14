@@ -40,8 +40,8 @@ export default function BudgetsChart({ children, budgets, income }) {
 
   // Variables for the d3 rendering
   const sizeRef = useRef();
-  const MARGIN = { left: 175, bottom: 180, top: 95, right: 120 };
-  const PHONE_MARGIN = { left: 125, bottom: 125, top: 100, right: 70 };
+  const MARGIN = { left: 175, bottom: 80, top: 95, right: 100 };
+  const PHONE_MARGIN = { left: 125, bottom: 125, top: 100, right: 40 };
 
   const YAxisBoxWidth = 120;
 
@@ -293,7 +293,7 @@ export default function BudgetsChart({ children, budgets, income }) {
         .call(yAxis)
         .selectAll("text")
         .attr("font-size", "16")
-        .style("color", "rgba(235, 235, 237, 0.9);")
+        .style("color", " bg-[#16181D]")
         .style("text-anchor", "middle")
         .attr("x", -YAxisBoxWidth / 2)
         .attr("y", -10);
@@ -319,8 +319,10 @@ export default function BudgetsChart({ children, budgets, income }) {
         .attr("x", -YAxisBoxWidth)
         .attr("y", -(yScale.bandwidth() / 2))
         .attr("height", yScale.bandwidth())
-        .attr("fill", "rgba(10, 11, 13, 0.5)")
+        .attr("fill", "#16181D")
         .attr("opacity", 0.9)
+        .attr("stroke", "#2d323b")
+        .attr("stroke-width", 3)
         .attr("rx", cornerRadius) // Set the x-radius for rounded corners
         .attr("ry", cornerRadius) // Set the y-radius for rounded corners
         //.style("border-l-[#c1514a]/75")
@@ -355,7 +357,7 @@ export default function BudgetsChart({ children, budgets, income }) {
   // -- Stylings ---
   const dashboardSectionStyling = [
     "bg-[#101215]/75",
-    "w-[calc(90vw-360px)] max-xl:w-[87.25vw]",
+    "w-[calc(90vw-260px)] max-xl:w-[87.25vw]",
     "max-h-[80vh] h-[80vh] min-h-[80vh]",
     "max-md:max-h-[70vh] max-md:h-[70vh] max-md:min-h-[70vh]",
   ].join(" ");
