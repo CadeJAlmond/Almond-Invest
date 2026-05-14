@@ -185,7 +185,8 @@ export default function RetirementPredictionChart({
    *    from investing in the stock market until the User reaches their retirement age.
    */
   const calculateEarnings = (initialIncome) => {
-
+    let earnings = [initialIncome]
+    let totalTaxedIncome = [0]
     /**
      * Tax brackets derived from :
      * https://www.nerdwallet.com/article/taxes/federal-income-tax-brackets
@@ -451,7 +452,6 @@ export default function RetirementPredictionChart({
    */
   const computeStatsOfCompoundedMoney = (moneyHovered, index) => {
     const invested = Math.round(incomeToInvestAnnually) * index;
-
     const earnedMoney = {
       label: `Earnings `,
       value: `$${addComasToNumber(moneyHovered)}`,
@@ -713,13 +713,13 @@ export default function RetirementPredictionChart({
         </button>
         <div id="Overview-div" className={statsStyling}>
           {/* Display each statistic onto the sidebar */}
-          {retirementStats.map((statsInfo) => {
+          {retirementStats.map((statsInfo, index) => {
             // Inject the styling into the statsInfo
             statsInfo["statsCardStyling"] = statsCardStyling
             statsInfo["spanStyling"] = spanStyling
 
             return (
-              <RetirementStatisticCard statsInfo={statsInfo} />
+              <RetirementStatisticCard statsInfo={statsInfo} key={`${index}-${statsInfo.value}`} />
             );
           })}
         </div>
