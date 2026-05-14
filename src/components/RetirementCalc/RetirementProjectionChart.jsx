@@ -30,6 +30,7 @@ export default function RetirementPredictionChart({
   annualIncome,
   percentageOfIncomeToInvest,
   age,
+  retirementAge,
   isRothIRA,
 }) {
   // -==== RETIREMENT PROJECTION GLOBAL VARIABLES ====-
@@ -102,7 +103,8 @@ export default function RetirementPredictionChart({
     !stockGainsPerYear ||
     !annualIncome ||
     !percentageOfIncomeToInvest ||
-    !age
+    !age ||
+    !retirementAge
   ) {
     return (
       <section ref={sizeRef}>
@@ -118,6 +120,7 @@ export default function RetirementPredictionChart({
   // -==== RETIREMENT SIMULATION CALCULATIONS ====-
 
   const incomeToInvestAnnually = annualIncome * (percentageOfIncomeToInvest / 100);
+  const yearsToRetirement = retirementAge - age;
 
   /**
    * @brief : Calculates the income gained from a year of compounded growth
@@ -204,34 +207,27 @@ export default function RetirementPredictionChart({
       0.37: 609_351,
     };
 
-    const yearsToRetirement = 65 - age;
-    for (let i = 1; i <= yearsToRetirement; i++) {
-      // Get tax data
-      const [updatedTaxBrackets, taxBracket] = isRothIRA ?
-        getTaxBracket(taxBrackets, 0, annualIncome) : [taxBrackets, 0];
-
-      // Apply and record relevant tax info to computed data
-      taxBrackets = updatedTaxBrackets;
-      const taxedIncome = incomeToInvestAnnually * (1 - taxBracket);
-
-      totalTaxedIncome.push(totalTaxedIncome.at(-1) + incomeToInvestAnnually - taxedIncome);
-
+    for (let i = 1; i < yearsToRetirement; i++) {
       // Calculate compound interest
-      let earned = calculateCompoundEarnings(earnings[i - 1] + taxedIncome);
+      let compoundedEarnings = calculateCompoundEarnings(earnings[i - 1] + incomeToInvestAnnually);
 
       // Apply taxes to a non-IRA account
-      if (!isRothIRA && i == yearsToRetirement) {
+      if (!isRothIRA && i === yearsToRetirement - 1) {
         const [updatedTaxBrackets, taxBracket] = getTaxBracket(
-          taxBrackets, 0, earnings.at(-1)
+          taxBrackets, 0, compoundedEarnings
         );
 
-        totalTaxedIncome[i] = earned * taxBracket;
-        earned = earned * (1 - taxBracket);
+        totalTaxedIncome.push(compoundedEarnings * taxBracket);
+        const taxRate = 1 - taxBracket;
+        compoundedEarnings = compoundedEarnings * taxRate;
       }
-      // Record the growth for the current year
-      earnings.push(earned);
-    }
+      else {
+        totalTaxedIncome.push(0)
+      }
 
+      // Record the growth for the current year
+      earnings.push(compoundedEarnings);
+    }
     return [earnings, totalTaxedIncome, isRothIRA];
   };
 
@@ -243,6 +239,7 @@ export default function RetirementPredictionChart({
     incomeToInvestAnnually,
     initialBalance,
     age,
+    retirementAge,
     isRothIRA,
   ];
 
@@ -250,7 +247,6 @@ export default function RetirementPredictionChart({
   // simulation
   useEffect(() => {
     const [earnings, taxedIncome] = calculateEarnings(initialBalance);
-
     // Update state
     setRetirementFunds(earnings);
     setTaxesPaid(taxedIncome);
@@ -464,7 +460,7 @@ export default function RetirementPredictionChart({
 
     const earnedMoney = {
       label: `Earnings `,
-      value: `: $${addComasToNumber(moneyHovered)}`,
+      value: `$${addComasToNumber(moneyHovered)}`,
     };
     const finalEarnings = {
       label: `Final Earnings : `,
@@ -476,7 +472,7 @@ export default function RetirementPredictionChart({
     };
     const retirementDate = {
       label: `Retirement Year : `,
-      value: `${convertNumberToDate(65 - age)}`,
+      value: `${convertNumberToDate(yearsToRetirement)}`,
     };
     const moneyInvested = {
       label: `Money Invested : `,
@@ -491,11 +487,11 @@ export default function RetirementPredictionChart({
     const taxes = {
       label: `Taxes Paid : `,
       value: `
-        $${addComasToNumber(Math.round(totalTaxesPaid.at(index)))}
+        $${addComasToNumber(Math.round(totalTaxesPaid[index]))}
       `,
     };
 
-    if (index !== 65 - age)
+    if (index !== yearsToRetirement)
       return [
         earnedMoney,
         selectedYear,
@@ -674,7 +670,7 @@ export default function RetirementPredictionChart({
   function StatsSidebar() {
     // Get the over-all statistics of the final retirement estimate
     const retirementStats = computeStatsOfCompoundedMoney(
-      Math.round(retirementEarnings.at(-1)), 65 - age
+      Math.round(retirementEarnings.at(-1)), yearsToRetirement - 1
     );
 
     // Create the stylings for the stats-side bar

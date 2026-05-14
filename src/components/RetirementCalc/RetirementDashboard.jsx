@@ -137,22 +137,27 @@ export default function RetirementDashboard() {
       </ChartsSideBar>
 
       {/* Render a RetirementPredictionChart which displays the retirement projection */}
-      <RetirementPredictionChart
-        stockGainsPerYear={+graphValues.expectedStockGrowth.value}
-        initialBalance={+graphValues.initialBalance.value}
-        annualIncome={+graphValues.annualIncome.value}
-        percentageOfIncomeToInvest={+graphValues.investing.value}
-        age={+graphValues.age.value}
-        isRothIRA={graphValues.isRothIRA.value}
-      >
-        {loadingInputChanges && (
-          <AnimatedLoading
-            styles={
-              "w-[calc(70vw-160px)] h-[55%] flex flex-col justify-center items-center"
-            }
-          />
-        )}
-      </RetirementPredictionChart>
+      {graphValues.age.value >= graphValues.retirementAge.value ? <div>
+        <p className="py-10 px-10 text-2xl text-[#c1514a]">!! : Age must be less than retirement age</p>
+      </div> :
+        <RetirementPredictionChart
+          stockGainsPerYear={+graphValues.expectedStockGrowth.value}
+          initialBalance={+graphValues.initialBalance.value}
+          annualIncome={+graphValues.annualIncome.value}
+          percentageOfIncomeToInvest={+graphValues.investing.value}
+          age={+graphValues.age.value}
+          retirementAge={+graphValues.retirementAge.value}
+          isRothIRA={graphValues.isRothIRA.value}
+        >
+          {loadingInputChanges && (
+            <AnimatedLoading
+              styles={
+                "w-[calc(70vw-160px)] h-[55%] flex flex-col justify-center items-center"
+              }
+            />
+          )}
+        </RetirementPredictionChart>
+      }
     </main>
   );
 }
